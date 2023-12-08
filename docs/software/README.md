@@ -1,4 +1,5 @@
 # Реалізація інформаційного та програмного забезпечення
+
 ```sql
 -- MySQL Workbench Forward Engineering
 
@@ -186,12 +187,11 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 -- -----------------------------------------------------
 START TRANSACTION;
 USE `DBLabs`;
-INSERT INTO `DBLabs`.`Role` (`id`, `name`, `description`) VALUES (, 'Respondent', 'A user that taking a survey');
-INSERT INTO `DBLabs`.`Role` (`id`, `name`, `description`) VALUES (, 'Editor', 'The user who edits the survey');
-INSERT INTO `DBLabs`.`Role` (`id`, `name`, `description`) VALUES (, 'Admin', 'The user is the owner of the survey');
+INSERT INTO `DBLabs`.`Role` (`name`, `description`) VALUES ('Respondent', 'A user that taking a survey');
+INSERT INTO `DBLabs`.`Role` (`name`, `description`) VALUES ('Editor', 'The user who edits the survey');
+INSERT INTO `DBLabs`.`Role` (`name`, `description`) VALUES ('Admin', 'The user is the owner of the survey');
 
 COMMIT;
 ```
 
 - RESTfull сервіс для управління даними
-
