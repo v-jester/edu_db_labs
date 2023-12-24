@@ -194,4 +194,168 @@ INSERT INTO `DBLabs`.`Role` (`name`, `description`) VALUES ('Admin', 'The user i
 COMMIT;
 ```
 
-- RESTfull сервіс для управління даними
+## RESTfull сервіс для управління даними
+
+### Вхідний файл програми
+
+```js
+const express = require("express");
+const userRouter = require("./routes/index");
+const AppError = require("./utils/appError");
+const errorHandler = require("./utils/errorHandler")
+const app = express();
+app.use(express.json());
+app.use(userRouter);
+
+app.all("*",(req, res, next) =>{
+    next(new AppError(`The URL ${req.originalUrl} does not exists`, 404));
+});
+app.use(errorHandler);
+
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`server running on port ${PORT}`);
+});
+
+module.exports = app;
+```
+
+### Файл для встановлення доступу до бази даних
+
+```js
+const  mysql = require("mysql2");
+require("dotenv").config();
+
+const conn = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+});
+conn.connect();
+
+module.exports = conn;
+```
+
+### CRUD для опитувань
+
+#### Маршрути
+
+```js
+const express = require("express");
+const controllers = require ("../controllers/index")
+const userRouter = express.Router();
+
+userRouter.route("/user").get(controllers.getAllUsers).post(controllers.createUser);
+userRouter
+    .route("/user/:id")
+    .get(controllers.getUserById)
+    .put(controllers.updateUser)
+    .delete(controllers.deleteUser);
+
+module.exports = userRouter;
+```
+
+#### Контролер
+
+```js
+const AppError = require("../utils/appError");
+const conn = require("../services/db");
+
+exports.getAllUsers = (req, res, next) => {
+    conn.query("SELECT * FROM user", function (err, data, fields) {
+        if (err) return next(new AppError(err));
+        res.status(200).json({
+            status: "success",
+            length: data?.length,
+            data: data,
+        });
+    });
+};
+
+exports.createUser = (req, res, next) => {
+    if (!req.body) return next(new AppError("No form data found", 404));
+    const values = [
+        req.body.password,
+        req.body.name,
+        req.body.surname,
+        req.body.nickname,
+        req.body.email,
+        req.body.picture,
+        req.body.Role_id,
+    ];
+    conn.query(
+        "INSERT INTO user (password, name, surname, nickname, email, picture, Role_id) VALUES(?)",
+        [values],
+        function (err, data, fields) {
+            if (err) return next(new AppError(err, 500));
+            res.status(201).json({
+                status: "success",
+                message: "user added!",
+            });
+        }
+    );
+};
+
+exports.getUserById = (req, res, next) => {
+    if (!req.params.id) {
+        return next(new AppError("No user id found", 404));
+    }
+    conn.query(
+        "SELECT * FROM user WHERE id = ?",
+        [req.params.id],
+        function (err, data, fields) {
+            if (err) return next(new AppError(err, 500));
+            res.status(200).json({
+                status: "success",
+                length: data?.length,
+                data: data,
+            });
+        }
+    );
+};
+
+exports.updateUser = (req, res, next) => {
+    if (!req.params.id) {
+        return next(new AppError("No user id found", 404));
+    }
+    conn.query(
+        "UPDATE user SET password=?, name=?, surname=?, nickname=?, email=?, picture=?, Role_id=? WHERE id=?",
+        [
+            req.body.password,
+            req.body.name,
+            req.body.surname,
+            req.body.nickname,
+            req.body.email,
+            req.body.picture,
+            req.body.Role_id,
+            req.params.id,
+        ],
+        function (err, data, fields) {
+            if (err) return next(new AppError(err, 500));
+            res.status(201).json({
+                status: "success",
+                message: "user info updated!",
+            });
+        }
+    );
+};
+
+exports.deleteUser = (req, res, next) => {
+    if (!req.params.id) {
+        return next(new AppError("No todo id found", 404));
+    }
+    conn.query(
+        "DELETE FROM User WHERE id=?",
+        [req.params.id],
+        function (err, fields) {
+            if (err) return next(new AppError(err, 500));
+            res.status(201).json({
+                status: "success",
+                message: "user deleted!",
+            });
+        }
+    );
+};
+```
+
